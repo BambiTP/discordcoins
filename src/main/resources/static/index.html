@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Discord Coin Clicker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            margin: 0;
+        }
+        #main {
+            flex: 1;
+            padding: 40px;
+        }
+        #sidebar {
+            width: 250px;
+            border-left: 1px solid #ccc;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+        .user {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .user img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="main">
+
+    <h1>Coin Clicker</h1>
+
+    <button id="login">Login with Discord</button>
+    <br><br>
+    <button id="coin">Add Coin</button>
+    <p id="coins"></p>
+
+</div>
+
+<div id="sidebar">
+    <h3>Players</h3>
+    <div id="users"></div>
+</div>
+
+<script>
+// Remove reading userId from URL
+let userId = null;
+
+// Check if logged in by calling /api/users
+async function checkLogin() {
+    const res = await fetch("/api/users");
+    const users = await res.json();
+    // If your session has a logged-in user, coin button works
+    // Otherwise, user must login
+}
+// Login button redirects to /login
+document.getElementById("login").onclick = async () => {
+    const res = await fetch("/login");
+    const url = await res.text();
+    window.location = url;
+};
+
+// Add coin button
+async function addCoin() {
+    if (!userId) {
+        alert("Please login first");
+        return;
+    }
+
+    const res = await fetch("/api/addCoin/" + userId, { method: "POST" });
+    const user = await res.json();
+
+    document.getElementById("coins").innerText = "Coins: " + user.coins;
+}
+
+document.getElementById("coin").onclick = async () => {
+    const res = await fetch("/api/addCoin", { method: "POST" });
+    const user = await res.json();
+    document.getElementById("coins").innerText = "Coins: " + user.coins;
+};
+
+// Load all users for leaderboard
+async function loadUsers() {
+    const res = await fetch("/api/users");
+    const users = await res.json();
+
+    const div = document.getElementById("users");
+    div.innerHTML = "";
+
+    users.forEach(u => {
+        const el = document.createElement("div");
+        el.className = "user";
+
+        const avatarUrl = u.avatar 
+            ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png` 
+            : "https://cdn.discordapp.com/embed/avatars/0.png";
+
+        el.innerHTML = `
+            <img src="${avatarUrl}">
+            <span>${u.username} (${u.coins})</span>
+        `;
+
+        div.appendChild(el);
+    });
+}
+
+// Refresh leaderboard every 2 seconds
+setInterval(loadUsers, 2000);
+loadUsers();
+</script>
+
+</body>
+</html>

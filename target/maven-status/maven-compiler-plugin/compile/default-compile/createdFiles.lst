@@ -1,0 +1,5 @@
+com/app/User.class
+com/app/AuthController.class
+com/app/UserStore.class
+com/app/DiscordCoinsApplication.class
+com/app/CoinController.class
