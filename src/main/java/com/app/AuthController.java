@@ -14,13 +14,15 @@ import jakarta.servlet.http.HttpSession;
 @RestController
 public class AuthController {
 
-private final String CLIENT_ID = System.getenv("CLIENT_ID");
-private final String CLIENT_SECRET = System.getenv("CLIENT_SECRET");
-private final String REDIRECT_URI = System.getenv("REDIRECT_URI");
+    // Use environment variables for credentials
+    private final String CLIENT_ID = System.getenv("CLIENT_ID");
+    private final String CLIENT_SECRET = System.getenv("CLIENT_SECRET");
+    private final String REDIRECT_URI = System.getenv("REDIRECT_URI");
 
     @Autowired
     UserStore store;
 
+    // Endpoint to generate Discord login URL
     @GetMapping("/login")
     public String login() {
         String url = "https://discord.com/api/oauth2/authorize"
@@ -31,11 +33,13 @@ private final String REDIRECT_URI = System.getenv("REDIRECT_URI");
         return url;
     }
 
+    // OAuth2 callback endpoint
     @GetMapping("/callback")
     public ResponseEntity<?> callback(@RequestParam String code, HttpSession session) {
         try {
             RestTemplate rest = new RestTemplate();
 
+            // Exchange code for access token
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -51,6 +55,7 @@ private final String REDIRECT_URI = System.getenv("REDIRECT_URI");
 
             String accessToken = (String) tokenResp.getBody().get("access_token");
 
+            // Fetch user info
             HttpHeaders userHeaders = new HttpHeaders();
             userHeaders.set("Authorization", "Bearer " + accessToken);
             HttpEntity<String> userEntity = new HttpEntity<>(userHeaders);
@@ -67,13 +72,13 @@ private final String REDIRECT_URI = System.getenv("REDIRECT_URI");
             String username = (String) userData.get("username");
             String avatar = (String) userData.get("avatar");
 
-            // Save in memory
+            // Save user in memory store
             store.users.putIfAbsent(id, new User(id, username, avatar));
 
-            // Save userId in session
+            // Save userId in session for coin tracking
             session.setAttribute("userId", id);
 
-            // Redirect to main page (no user ID in URL)
+            // Redirect to main page (no user info in URL)
             HttpHeaders redirectHeaders = new HttpHeaders();
             redirectHeaders.setLocation(java.net.URI.create("/"));
             return new ResponseEntity<>(redirectHeaders, HttpStatus.FOUND);
@@ -83,4 +88,9 @@ private final String REDIRECT_URI = System.getenv("REDIRECT_URI");
         }
     }
 
+    // Debug endpoint to verify environment variable
+    @GetMapping("/debug")
+    public String debugEnv() {
+        return "REDIRECT_URI=" + System.getenv("REDIRECT_URI");
+    }
 }
